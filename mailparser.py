@@ -27,9 +27,10 @@ typ, data_sub = M.search(None, 'SUBJECT', '"%s subscription notification"' % sys
 typ, data_unsub = M.search(None, 'SUBJECT', '"%s unsubscribe notification"' % sys.argv[1])
 for num in data_sub[0].split():
     typ, data = M.fetch(num, '(RFC822)')
-    msg = email.message_from_string(data[0][1])
-    decode = email.header.decode_header(msg['Subject'])[0]
-    subject = unicode(decode[0])
+    msg = email.message_from_string(data[0][1].decode())
+    decoded, charset = email.header.decode_header(msg['Subject'])[0]
+    if charset is not None:
+        subject = decoded.decode(charset)
     #print('Message %s: %s' % (num, subject))
     date_tuple = email.utils.parsedate_tz(msg['Date'])
     try:
@@ -38,9 +39,10 @@ for num in data_sub[0].split():
         per_month[(date_tuple[0], date_tuple[1])] = 1
 for num in data_unsub[0].split():
     typ, data = M.fetch(num, '(RFC822)')
-    msg = email.message_from_string(data[0][1])
-    decode = email.header.decode_header(msg['Subject'])[0]
-    subject = unicode(decode[0])
+    msg = email.message_from_string(data[0][1].decode())
+    decoded, charset = email.header.decode_header(msg['Subject'])[0]
+    if charset is not None:
+        subject = decoded.decode(charset)
     #print('Message %s: %s' % (num, subject))
     date_tuple = email.utils.parsedate_tz(msg['Date'])
     try:
@@ -56,7 +58,7 @@ fig = figure()
 ylabel("subscriptions per month")
 xlabel("Month")
 
-months = [] 
+months = []
 month_labels = []
 for k in od.keys():
     months.append(k)
@@ -76,6 +78,7 @@ p = []
 p.append(plt.plot(np.arange(len(months)), subs, label="Monthly", marker='o'))
 p.append(plt.plot(np.arange(len(months)), subs_all, label="Overall", marker='+'))
 
+plt.xkcd()
 plt.legend(loc='upper left')
 
 matplotlib.pyplot.savefig("%s-subs.pdf" % sys.argv[1], format='pdf', pad_inches=2)
